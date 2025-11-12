@@ -248,9 +248,9 @@ fn main() {
         d.draw_text(mesh_type, 10, 60, 16, raylib::color::Color::YELLOW);
 
         let controls = if obj_sphere.is_some() {
-            "1-4: Shaders | M: Modelo | SPACE: Pausa | ↑↓: Zoom | ESC: Salir"
+            "1-4: Shaders | M: Modelo | SPACE: Pausa | up/down: Zoom | ESC: Salir"
         } else {
-            "1-4: Shaders | SPACE: Pausa | ↑↓: Zoom | ESC: Salir"
+            "1-4: Shaders | SPACE: Pausa | up/down: Zoom | ESC: Salir"
         };
 
         d.draw_text(

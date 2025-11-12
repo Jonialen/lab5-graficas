@@ -1,5 +1,5 @@
 // Importa los tipos Vec2 y Vec3 de la biblioteca nalgebra_glm para manejar vectores de 2D y 3D.
-use nalgebra_glm::{Vec2, Vec3};
+use nalgebra_glm::{Vec3};
 // Importa la constante PI para cálculos matemáticos.
 use std::f32::consts::PI;
 
@@ -8,7 +8,6 @@ use std::f32::consts::PI;
 pub struct Vertex {
     pub position: Vec3, // Posición del vértice en el espacio 3D.
     pub normal: Vec3,   // Vector normal del vértice, usado para la iluminación.
-    pub uv: Vec2,       // Coordenadas de textura (UV) para mapear texturas sobre el objeto.
 }
 
 // Define una malla de objeto, que consiste en una lista de vértices y una lista de índices que forman las caras.
@@ -28,7 +27,6 @@ impl ObjMesh {
         vertices.push(Vertex {
             position: Vec3::new(0.0, radius, 0.0),
             normal: Vec3::new(0.0, 1.0, 0.0),
-            uv: Vec2::new(0.5, 0.0),
         });
 
         // Genera los vértices intermedios de la esfera, excluyendo los polos.
@@ -43,9 +41,8 @@ impl ObjMesh {
 
                 let position = Vec3::new(x * radius, y * radius, z * radius);
                 let normal = Vec3::new(x, y, z);
-                let uv = Vec2::new(s as f32 / sectors as f32, r as f32 / rings as f32);
 
-                vertices.push(Vertex { position, normal, uv });
+                vertices.push(Vertex { position, normal});
             }
         }
 
@@ -53,7 +50,6 @@ impl ObjMesh {
         vertices.push(Vertex {
             position: Vec3::new(0.0, -radius, 0.0),
             normal: Vec3::new(0.0, -1.0, 0.0),
-            uv: Vec2::new(0.5, 1.0),
         });
 
         // Genera los índices para los triángulos que conectan con el polo norte.
@@ -122,13 +118,7 @@ impl ObjMesh {
                 position.normalize()
             };
 
-            let uv = if !mesh.texcoords.is_empty() {
-                Vec2::new(mesh.texcoords[i * 2], mesh.texcoords[i * 2 + 1])
-            } else {
-                Vec2::new(0.0, 0.0)
-            };
-
-            vertices.push(Vertex { position, normal, uv });
+            vertices.push(Vertex { position, normal});
         }
 
         Ok(ObjMesh {
@@ -137,46 +127,4 @@ impl ObjMesh {
         })
     }
 
-    // Genera un anillo plano con un número específico de segmentos.
-    pub fn create_ring(inner_radius: f32, outer_radius: f32, segments: u32) -> Self {
-        let mut vertices = Vec::new();
-        let mut indices = Vec::new();
-
-        // Genera los vértices en dos círculos concéntricos (interno y externo).
-        for ring in 0..=1 {
-            let radius = if ring == 0 { inner_radius } else { outer_radius };
-
-            for s in 0..=segments {
-                let angle = 2.0 * PI * s as f32 / segments as f32;
-                let x = angle.cos() * radius;
-                let z = angle.sin() * radius;
-
-                vertices.push(Vertex {
-                    position: Vec3::new(x, 0.0, z),
-                    normal: Vec3::new(0.0, 1.0, 0.0), // La normal apunta hacia arriba.
-                    uv: Vec2::new(s as f32 / segments as f32, ring as f32),
-                });
-            }
-        }
-
-        // Genera los índices para formar los triángulos del anillo.
-        for s in 0..segments {
-            let i0 = s;
-            let i1 = s + 1;
-            let i2 = s + segments + 1;
-            let i3 = s + segments + 2;
-
-            // Primer triángulo del quad.
-            indices.push(i0);
-            indices.push(i2);
-            indices.push(i1);
-
-            // Segundo triángulo del quad.
-            indices.push(i1);
-            indices.push(i2);
-            indices.push(i3);
-        }
-
-        ObjMesh { vertices, indices }
-    }
 }

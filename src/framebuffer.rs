@@ -10,9 +10,6 @@ pub struct Color {
 }
 
 impl Color {
-    // Define colores constantes para un fácil acceso.
-    pub const BLACK: Color = Color { r: 0, g: 0, b: 0 }; // Color negro.
-    pub const WHITE: Color = Color { r: 255, g: 255, b: 255 }; // Color blanco.
 
     // Crea una nueva instancia de Color.
     #[inline]
@@ -28,22 +25,6 @@ impl Color {
             g: (v.y.clamp(0.0, 1.0) * 255.0) as u8,
             b: (v.z.clamp(0.0, 1.0) * 255.0) as u8,
         }
-    }
-
-    // Convierte un color a un vector de 3D (Vec3). Los componentes del color se normalizan de 0-255 a 0.0-1.0.
-    #[inline]
-    pub fn to_vec3(&self) -> Vec3 {
-        Vec3::new(
-            self.r as f32 / 255.0,
-            self.g as f32 / 255.0,
-            self.b as f32 / 255.0,
-        )
-    }
-
-    // Convierte el color a un tipo de color compatible con la biblioteca Raylib.
-    #[inline]
-    pub fn to_raylib(&self) -> raylib::color::Color {
-        raylib::color::Color::new(self.r, self.g, self.b, 255)
     }
 }
 

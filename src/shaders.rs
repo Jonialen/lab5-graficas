@@ -227,7 +227,7 @@ impl StarShader for ClassicSunShader {
 pub struct PulsarShader;
 
 impl StarShader for PulsarShader {
-    fn fragment(&self, pos: &Vec3, normal: &Vec3, time: f32) -> Color {
+    fn fragment(&self, pos: &Vec3, _normal: &Vec3, time: f32) -> Color {
         let normalized_pos = pos.normalize();
 
         // Pulsación principal
