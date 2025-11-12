@@ -1,3 +1,8 @@
+//! Star Shader Renderer - Punto de entrada principal.
+//
+// Este archivo inicializa la ventana, recursos y ciclo principal de renderizado para mostrar
+// una esfera 3D con diferentes shaders de estrellas, permitiendo interacción en tiempo real.
+
 mod framebuffer;
 mod mesh;
 mod renderer;
@@ -10,9 +15,11 @@ use raylib::prelude::*;
 use renderer::Renderer;
 use shaders::*;
 
+/// Dimensiones de la ventana de renderizado.
 const WIDTH: usize = 800;
 const HEIGHT: usize = 600;
 
+/// Estructura que representa un objeto renderizable con malla, shader y transformaciones.
 struct RenderObject {
     mesh: ObjMesh,
     shader: Box<dyn StarShader>,
@@ -23,6 +30,7 @@ struct RenderObject {
 }
 
 impl RenderObject {
+    /// Crea un nuevo objeto renderizable.
     fn new(mesh: ObjMesh, shader: Box<dyn StarShader>, position: Vec3, scale: f32) -> Self {
         RenderObject {
             mesh,
@@ -34,6 +42,7 @@ impl RenderObject {
         }
     }
 
+    /// Calcula la matriz de modelo (transformación) animada por tiempo.
     fn get_model_matrix(&self, time: f32) -> Mat4 {
         let mut transform = Mat4::identity();
         transform = nalgebra_glm::translate(&transform, &self.position);
@@ -43,9 +52,11 @@ impl RenderObject {
     }
 }
 
+/// Función principal: inicializa la aplicación y ejecuta el ciclo de renderizado.
 fn main() {
     println!("=== Iniciando Star Shader Renderer ===");
 
+    // Inicializa la ventana y el contexto de Raylib.
     let (mut rl, thread) = raylib::init()
         .size(WIDTH as i32, HEIGHT as i32)
         .title("Star Shader - Software Renderer")
@@ -53,9 +64,11 @@ fn main() {
 
     rl.set_target_fps(60);
 
+    // Genera una esfera procedural por defecto.
     println!("Generando esfera procedural...");
     let sphere_mesh = ObjMesh::create_sphere(1.0, 64, 64);
 
+    // Intenta cargar una esfera desde archivo OBJ.
     let obj_sphere = match ObjMesh::load_from_obj("assets/sphere.obj") {
         Ok(mesh) => {
             println!("✓ sphere.obj cargado exitosamente");
@@ -70,6 +83,7 @@ fn main() {
 
     let mut use_obj_model = obj_sphere.is_some();
 
+    // Función para obtener la malla de esfera actual (procedural u OBJ).
     let get_sphere = |use_obj: bool| -> ObjMesh {
         if use_obj && obj_sphere.is_some() {
             obj_sphere.as_ref().unwrap().clone()
@@ -78,6 +92,7 @@ fn main() {
         }
     };
 
+    // Crea un objeto estrella con el shader seleccionado.
     let create_star = |use_obj: bool, shader_type: usize| -> RenderObject {
         let current_sphere = get_sphere(use_obj);
 
@@ -92,6 +107,7 @@ fn main() {
         RenderObject::new(current_sphere, shader, Vec3::new(0.0, 0.0, 0.0), 1.5)
     };
 
+    // Nombres de los shaders disponibles.
     let shader_names = vec![
         "1: Sol Clásico (Perlin + Turbulence)",
         "2: Pulsar (Simplex + Pulsación)",
@@ -105,6 +121,7 @@ fn main() {
     let mut framebuffer = Framebuffer::new(WIDTH, HEIGHT);
     let renderer = Renderer::new(WIDTH, HEIGHT);
 
+    // Crea la textura inicial para mostrar el framebuffer en pantalla.
     println!("Creando textura...");
     let initial_image =
         Image::gen_image_color(WIDTH as i32, HEIGHT as i32, raylib::color::Color::BLACK);
@@ -113,6 +130,7 @@ fn main() {
         .load_texture_from_image(&thread, &initial_image)
         .expect("No se pudo crear textura");
 
+    // Variables de control de animación y cámara.
     let mut paused = false;
     let mut paused_time = 0.0f32;
     let mut last_active_time = 0.0f32;
@@ -126,16 +144,18 @@ fn main() {
     println!("  UP/DOWN: Zoom cámara");
     println!("  ESC: Salir\n");
 
+    // Ciclo principal de la aplicación.
     while !rl.window_should_close() {
         let current_real_time = rl.get_time() as f32;
 
+        // Calcula el tiempo de animación considerando pausa.
         let time = if paused {
             paused_time
         } else {
             last_active_time + (current_real_time - last_active_time)
         };
 
-        // Cambio de shader
+        // Cambia el shader activo según la tecla presionada.
         if rl.is_key_pressed(KeyboardKey::KEY_ONE) {
             current_shader = 0;
             star = create_star(use_obj_model, current_shader);
@@ -153,7 +173,7 @@ fn main() {
             star = create_star(use_obj_model, current_shader);
         }
 
-        // Toggle modelo
+        // Alterna entre modelo procedural y OBJ si está disponible.
         if rl.is_key_pressed(KeyboardKey::KEY_M) && obj_sphere.is_some() {
             use_obj_model = !use_obj_model;
             star = create_star(use_obj_model, current_shader);
@@ -167,7 +187,7 @@ fn main() {
             );
         }
 
-        // Pausa
+        // Control de pausa de animación.
         if rl.is_key_pressed(KeyboardKey::KEY_SPACE) {
             if paused {
                 let pause_duration = current_real_time - paused_time;
@@ -179,7 +199,7 @@ fn main() {
             }
         }
 
-        // Control de cámara
+        // Control de zoom de cámara.
         if rl.is_key_down(KeyboardKey::KEY_UP) {
             camera_distance -= 0.02;
             camera_distance = camera_distance.max(2.0);
@@ -193,12 +213,14 @@ fn main() {
             last_active_time = time;
         }
 
+        // Matriz de vista de la cámara (orbita alrededor del origen).
         let view_matrix = look_at(
             &Vec3::new(0.0, 0.0, camera_distance),
             &Vec3::new(0.0, 0.0, 0.0),
             &Vec3::new(0.0, 1.0, 0.0),
         );
 
+        // Matriz de proyección perspectiva.
         let projection_matrix = perspective(
             WIDTH as f32 / HEIGHT as f32,
             60.0_f32.to_radians(),
@@ -206,10 +228,13 @@ fn main() {
             100.0,
         );
 
+        // Limpia el framebuffer con un color de fondo.
         framebuffer.clear(Color::new(5, 5, 15));
 
+        // Calcula la transformación del modelo animada.
         let model_matrix = star.get_model_matrix(time);
 
+        // Renderiza la malla de la estrella con el shader seleccionado.
         renderer.render_mesh(
             &mut framebuffer,
             &star.mesh,
@@ -220,10 +245,12 @@ fn main() {
             time,
         );
 
+        // Actualiza la textura de Raylib con el framebuffer generado.
         if let Err(e) = texture.update_texture(framebuffer.as_bytes()) {
             eprintln!("Error actualizando textura: {:?}", e);
         }
 
+        // Dibuja la textura en pantalla y la interfaz de usuario.
         let mut d = rl.begin_drawing(&thread);
 
         d.clear_background(raylib::color::Color::new(5, 5, 15, 255));

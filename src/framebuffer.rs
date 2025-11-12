@@ -1,23 +1,29 @@
-// Utiliza el tipo Vec3 de la biblioteca nalgebra_glm para manejar vectores de 3D.
-use nalgebra_glm::Vec3;
+//! Módulo de framebuffer para renderizado por software.
+//
+// Este archivo define las estructuras y métodos para el manejo de color, almacenamiento de píxeles y profundidad (z-buffer)
+// en imágenes renderizadas, facilitando la integración con librerías gráficas como Raylib.
 
-// Define una estructura para representar un color con componentes rojo, verde y azul (RGB).
+use nalgebra_glm::Vec3; // Vector 3D para manipulación de colores flotantes.
+
+/// Representa un color RGB de 8 bits por canal.
 #[derive(Debug, Clone, Copy)]
 pub struct Color {
-    pub r: u8, // Componente rojo del color.
-    pub g: u8, // Componente verde del color.
-    pub b: u8, // Componente azul del color.
+    /// Componente rojo (0-255).
+    pub r: u8,
+    /// Componente verde (0-255).
+    pub g: u8,
+    /// Componente azul (0-255).
+    pub b: u8,
 }
 
 impl Color {
-
-    // Crea una nueva instancia de Color.
+    /// Crea un nuevo color RGB.
     #[inline]
     pub fn new(r: u8, g: u8, b: u8) -> Self {
         Color { r, g, b }
     }
 
-    // Convierte un vector de 3D (Vec3) a un color. Los componentes del vector se escalan de 0.0-1.0 a 0-255.
+    /// Convierte un vector Vec3 (componentes 0.0-1.0) a un color RGB (0-255).
     #[inline]
     pub fn from_vec3(v: Vec3) -> Self {
         Color {
@@ -28,26 +34,30 @@ impl Color {
     }
 }
 
-// Define el búfer de fotogramas, que almacena los datos de píxeles y profundidad de una imagen renderizada.
+/// Framebuffer que almacena los datos de color y profundidad de la imagen renderizada.
 pub struct Framebuffer {
-    pub width: usize, // Ancho del búfer de fotogramas en píxeles.
-    pub height: usize, // Alto del búfer de fotogramas en píxeles.
-    pub buffer: Vec<u8>, // Búfer de píxeles en formato RGBA (4 bytes por píxel).
-    pub zbuffer: Vec<f32>, // Búfer de profundidad para el Z-buffering.
+    /// Ancho del framebuffer en píxeles.
+    pub width: usize,
+    /// Alto del framebuffer en píxeles.
+    pub height: usize,
+    /// Búfer de color en formato RGBA (4 bytes por píxel).
+    pub buffer: Vec<u8>,
+    /// Búfer de profundidad (z-buffer) para pruebas de visibilidad.
+    pub zbuffer: Vec<f32>,
 }
 
 impl Framebuffer {
-    // Crea un nuevo búfer de fotogramas con las dimensiones especificadas.
+    /// Crea un nuevo framebuffer con las dimensiones especificadas.
     pub fn new(width: usize, height: usize) -> Self {
         Framebuffer {
             width,
             height,
-            buffer: vec![0; width * height * 4], // Inicializa el búfer de color a negro.
-            zbuffer: vec![f32::INFINITY; width * height], // Inicializa el búfer de profundidad a infinito.
+            buffer: vec![0; width * height * 4], // Inicializa el color a negro.
+            zbuffer: vec![f32::INFINITY; width * height], // Inicializa la profundidad a infinito.
         }
     }
 
-    // Limpia el búfer de fotogramas, estableciendo todos los píxeles a un color específico.
+    /// Limpia el framebuffer, estableciendo todos los píxeles a un color y reseteando el z-buffer.
     #[inline]
     pub fn clear(&mut self, color: Color) {
         for i in 0..self.width * self.height {
@@ -55,32 +65,32 @@ impl Framebuffer {
             self.buffer[idx] = color.r;
             self.buffer[idx + 1] = color.g;
             self.buffer[idx + 2] = color.b;
-            self.buffer[idx + 3] = 255; // El canal alfa se establece en 255 (opaco).
+            self.buffer[idx + 3] = 255; // Canal alfa opaco.
         }
-        self.zbuffer.fill(f32::INFINITY); // Restablece el búfer de profundidad.
+        self.zbuffer.fill(f32::INFINITY); // Resetea la profundidad.
     }
 
-    // Establece el color de un píxel en las coordenadas (x, y) si su profundidad es menor que la actual.
+    /// Establece el color de un píxel (x, y) si pasa la prueba de profundidad.
     #[inline]
     pub fn set_pixel(&mut self, x: usize, y: usize, color: Color, depth: f32) {
         if x >= self.width || y >= self.height {
-            return; // No hace nada si las coordenadas están fuera de los límites.
+            return; // Ignora coordenadas fuera de rango.
         }
 
         let index = y * self.width + x;
 
-        // Comprueba si el nuevo píxel está más cerca que el píxel existente.
+        // Solo dibuja si el nuevo píxel está más cerca que el anterior.
         if depth < self.zbuffer[index] {
-            self.zbuffer[index] = depth; // Actualiza el búfer de profundidad.
+            self.zbuffer[index] = depth;
             let idx = index * 4;
             self.buffer[idx] = color.r;
             self.buffer[idx + 1] = color.g;
             self.buffer[idx + 2] = color.b;
-            self.buffer[idx + 3] = 255; // El canal alfa se establece en 255.
+            self.buffer[idx + 3] = 255;
         }
     }
 
-    // Devuelve una referencia al búfer de píxeles como un slice de bytes, para ser usado por Raylib.
+    /// Devuelve el búfer de color como slice de bytes para integración con APIs gráficas.
     pub fn as_bytes(&self) -> &[u8] {
         &self.buffer
     }
