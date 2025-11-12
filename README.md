@@ -51,9 +51,10 @@ El proyecto utiliza las siguientes crates de Rust:
 
 Estas dependencias se descargarán y compilarán automáticamente al ejecutar `cargo build` o `cargo run`.
 
-<img width="806" height="595" alt="imagen" src="https://github.com/user-attachments/assets/844faa16-70e7-4b52-9b4f-f271add5fc61" />
 <img width="790" height="590" alt="imagen" src="https://github.com/user-attachments/assets/5b2448d6-dff8-47a1-a91b-b55a20a03b07" />
+<img width="796" height="591" alt="imagen" src="https://github.com/user-attachments/assets/93d32f76-46d2-4e1e-9f93-a0e6c13d2a56" />
 <img width="793" height="594" alt="imagen" src="https://github.com/user-attachments/assets/3fe90933-6558-4ba4-8350-c5d5ba5f5c17" />
+<img width="797" height="594" alt="imagen" src="https://github.com/user-attachments/assets/e8be2c05-7399-4bac-8e3b-fcaf9f0867b4" />
 
 
 
